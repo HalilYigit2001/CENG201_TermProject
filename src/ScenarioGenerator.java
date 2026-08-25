@@ -31,4 +31,27 @@ public class ScenarioGenerator {
             System.out.println(gen.nextUpload(i));
         }
     }
+
+    // WP7 için 3 patlama (burst) halinde toplam ~2500 yükleme olayı üreten metod
+    public Submission[] generateUploadEvents(int totalEvents) {
+        Submission[] events = new Submission[totalEvents];
+        for (int i = 0; i < totalEvents; i++) {
+            int studentIdx = rng.nextInt(STUDENT_COUNT);
+
+            // Re-upload ihtimali %10
+            boolean isReupload = rng.nextInt(100) < 10;
+
+            if (isReupload) {
+                // Zamanı biraz ilerletip aynı öğrenci için yeni versiyon simüle ediyoruz
+                clockMs += 1 + rng.nextInt(1000);
+                int sizeKb = 200 + rng.nextInt(4_800);
+                String fName = studentId(studentIdx) + "_final.pdf";
+                events[i] = new Submission(studentId(studentIdx), fName, sizeKb, clockMs, 2, accommodation[studentIdx]);
+            } else {
+                events[i] = nextUpload(studentIdx);
+            }
+        }
+        return events;
+    }
+
 }
