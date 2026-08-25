@@ -1,46 +1,51 @@
 import java.util.NoSuchElementException;
 
 public class VersionStack {
+
+    // Kendi Node yapimiz
     private class Node {
         VersionRecord data;
-        Node next;
+        Node birSonraki; // next yerine birSonraki
 
         public Node(VersionRecord data) {
             this.data = data;
-            this.next = null;
+            this.birSonraki = null;
         }
     }
 
-    private Node top;
-    private int size;
+    private Node tepeNoktasi; // top yerine tepeNoktasi
+    private int gecerliBoyut; // size yerine
 
     public VersionStack() {
-        this.top = null;
-        this.size = 0;
+        this.tepeNoktasi = null;
+        this.gecerliBoyut = 0;
     }
 
     public void push(VersionRecord v) {
-        Node newNode = new Node(v);
-        newNode.next = top;
-        top = newNode;
-        size++;
+        Node yeniEklenen = new Node(v);
+        // Yeni geleni en uste koyuyoruz
+        yeniEklenen.birSonraki = tepeNoktasi;
+        tepeNoktasi = yeniEklenen;
+        gecerliBoyut++;
     }
 
     public VersionRecord pop() {
         if (isEmpty()) {
-            throw new NoSuchElementException("Stack is empty! No earlier version to rollback.");
+            throw new NoSuchElementException("Stack bombos, geri alinacak versiyon kalmadi!");
         }
-        VersionRecord record = top.data;
-        top = top.next;
-        size--;
-        return record;
+
+        VersionRecord silinecekKayıt = tepeNoktasi.data;
+        tepeNoktasi = tepeNoktasi.birSonraki; // bir asagi kaydir
+        gecerliBoyut--;
+
+        return silinecekKayıt;
     }
 
     public boolean isEmpty() {
-        return top == null;
+        return (tepeNoktasi == null);
     }
 
     public int size() {
-        return size;
+        return gecerliBoyut;
     }
 }

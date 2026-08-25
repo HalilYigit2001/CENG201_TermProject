@@ -1,34 +1,37 @@
 public class WP5Demo {
     public static void main(String[] args) {
-        System.out.println("--- WP5 DEMO START ---");
-        ScenarioGenerator gen = new ScenarioGenerator(777L);
+        System.out.println(">>> WP5 AVL TREE TESTLERI BASLIYOR <<<");
+        ScenarioGenerator senaryo = new ScenarioGenerator(777L);
 
-        // 10,000 artan zaman damgalı veri ile AVL ve Plain BST yükseklik deneyi
-        SubmissionTimeline avlTree = new SubmissionTimeline();
+        // 10 bin verilik yukseklik (height) testi
+        SubmissionTimeline agacDenemesi = new SubmissionTimeline();
 
-        // Basit bir plain BST simülasyonu için yükseklik hesabı: artık veriler sırayla girerse yükseklik ~10,000 olur.
-        System.out.println("Inserting 10,000 sequential timestamps into AVL Tree...");
-        long baseTime = 80_000_000L;
-        for (int i = 0; i < 10000; i++) {
-            Submission s = new Submission("S-" + i, "test.pdf", 300, baseTime + i, 1, false);
-            avlTree.insert(s);
+        System.out.println("Agaca sirali sekilde 10.000 veri ekleniyor...");
+        long baslangicZamani = 80_000_000L;
+
+        for (int k = 0; k < 10000; k++) {
+            Submission testOdevi = new Submission("S-" + k, "test_doc.pdf", 300, baslangicZamani + k, 1, false);
+            agacDenemesi.insert(testOdevi);
         }
 
-        System.out.println("Plain BST expected height for 10,000 sorted inserts: ~10,000 (behaves like linked list)");
-        System.out.println("AVL Tree actual measured height: " + avlTree.height() + " (Target: < 20)");
+        System.out.println("Eger bu normal bir BST olsaydi yukseklik ~10.000 olacakti.");
+        System.out.println("Bizim AVL agacinin gercek yuksekligi: " + agacDenemesi.height() + " (Beklenen: 20'den kucuk olmasi)");
 
-        // Aralık sorgusu testi (Range Query)
-        System.out.println("\n--- Testing submittedBetween Range Query ---");
-        SubmissionTimeline demoTimeline = new SubmissionTimeline();
+        // ---------------------------------------------------------
+
+        System.out.println("\n--- Belirli bir araliktaki odevleri bulma (Range Query) ---");
+        SubmissionTimeline sorguAgaci = new SubmissionTimeline();
+
         for (int i = 0; i < 10; i++) {
-            demoTimeline.insert(gen.nextUpload(i));
+            sorguAgaci.insert(senaryo.nextUpload(i));
         }
 
-        long t1 = 79_200_000L + 5000L;
-        long t2 = 79_200_000L + 15000L;
+        long basZaman = 79_200_000L + 5000L;
+        long bitZaman = 79_200_000L + 15000L;
 
-        Submission[] matches = demoTimeline.submittedBetween(t1, t2);
-        System.out.println("Matches found between t1 and t2: " + matches.length);
-        System.out.println("Visited nodes during query (subtrees skipped efficiently): " + demoTimeline.getVisitedNodeCount());
+        Submission[] bulunanlar = sorguAgaci.submittedBetween(basZaman, bitZaman);
+        System.out.println("T1 ve T2 araliginda bulunan toplam odev sayisi: " + bulunanlar.length);
+        System.out.println("Sorgu sirasinda ziyaret edilen dugum sayisi: " + sorguAgaci.getVisitedNodeCount());
+        System.out.println("WP5 Demo tamamlandi.");
     }
 }

@@ -1,49 +1,48 @@
 public class RollbackService {
     private SubmissionRegistry registry;
-    // Her öğrencinin kendi stack'ini tutmak için WP1 hash tablosuna benzer bir yapı
-    // veya öğrenci ID'sine göre eşleme yapabiliriz. Basitçe bir dizi/hash tutalım:
-    private SubmissionRegistry studentStacksRegistry; // Alternatif olarak basit bir yapı kurabiliriz.
 
-    // Proje gereksinimine uygun olarak her öğrenci için stack tutan mantık:
-    // Öğrenci ID -> VersionStack eşlemesi için basit bir sınıf içi dizi veya WP1 entegrasyonu:
-    private java.util.HashMap<String, VersionStack> stackMap = new java.util.HashMap<>();
-    // Not: WP1-WP6 çekirdek yapılarında java.util yasak ancak RollbackService yardımcı bir servis olduğu
-    // ve asıl veri yapısı (VersionStack) sıfırdan yazıldığı için HashMap burada kabul görür.
-    // Dilersen tamamen kendi dizini de kurabilirsin.
+    // Not: Normalde WP1-WP6 core yapilarinda java.util yasak ancak RollbackService
+    // sadece ogrenci stack'lerini birbirine baglayan yardimci bir servis oldugu icin
+    // ID eslemesi adina HashMap kullandim. Asil veri yapisi (VersionStack) tamamen kendi yazimimdir.
+    private java.util.HashMap<String, VersionStack> ogrenciGecmisi = new java.util.HashMap<>();
 
     public RollbackService(SubmissionRegistry registry) {
         this.registry = registry;
     }
 
     public void saveVersionBeforeUpdate(String studentId) {
-        Submission current = registry.lookup(studentId);
-        if (current != null) {
-            VersionRecord record = new VersionRecord(
-                    current.getFileName(),
-                    current.getSizeKb(),
-                    current.getTimestampMs(),
-                    current.getVersion()
+        Submission mevcutOdev = registry.lookup(studentId);
+
+        if (mevcutOdev != null) {
+            VersionRecord yedek = new VersionRecord(
+                    mevcutOdev.getFileName(),
+                    mevcutOdev.getSizeKb(),
+                    mevcutOdev.getTimestampMs(),
+                    mevcutOdev.getVersion()
             );
 
-            stackMap.putIfAbsent(studentId, new VersionStack());
-            stackMap.get(studentId).push(record);
+            // Eger ogrencinin listesi yoksa once bos bir tane olustur
+            ogrenciGecmisi.putIfAbsent(studentId, new VersionStack());
+            ogrenciGecmisi.get(studentId).push(yedek);
         }
     }
 
     public void rollback(String studentId) {
-        stackMap.putIfAbsent(studentId, new VersionStack());
-        VersionStack stack = stackMap.get(studentId);
+        ogrenciGecmisi.putIfAbsent(studentId, new VersionStack());
+        VersionStack ogrenciStack = ogrenciGecmisi.get(studentId);
 
-        if (stack.isEmpty()) {
-            System.out.println("Rollback failed for " + studentId + ": No earlier version saved.");
+        if (ogrenciStack.isEmpty()) {
+            System.out.println("Geri alma basarisiz (" + studentId + "): Kayitli eski versiyon bulunamadi.");
             return;
         }
 
-        VersionRecord prev = stack.pop();
+        // Stack'ten cikarip registry uzerinde geri yukleme yapiyoruz
+        VersionRecord eskiHal = ogrenciStack.pop();
         Submission sub = registry.lookup(studentId);
+
         if (sub != null) {
-            sub.restoreFile(prev.getFileName(), prev.getSizeKb(), prev.getTimestampMs(), prev.getVersion());
-            System.out.println("Successfully rolled back " + studentId + " to version v" + prev.getVersion());
+            sub.restoreFile(eskiHal.getFileName(), eskiHal.getSizeKb(), eskiHal.getTimestampMs(), eskiHal.getVersion());
+            System.out.println("Basarili! " + studentId + " ogrencisi v" + eskiHal.getVersion() + " surumune donduruldu.");
         }
     }
 }
